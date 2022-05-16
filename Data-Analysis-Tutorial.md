@@ -769,10 +769,16 @@ display(fullProtDF.head())
 </div>
 
 
-While each InnateDB
+While each InnateDB had listed a UniprotID, not every UniprotID was successfully queried from the Uniprot database. This means some of our InnateDB IDs (the nodes on our network) will not have ay information from Uniprot database. 
+
+### Tidying Data
+Now that we have Uniprot data associated with most of the nodes, we would like to make this data usable. Most of the columns are strings that are impossible to use in data analysis. However, some of the columns can be converted into usable information. The "Involvement in disease" entries have [Mendelian Inheritance in Man](https://www.omim.org/) (MIM) Ids, which are IDs of known genetic diseases and can be extracted via a regular expression. The same goes for The "Domain [FT]" column have a set number of descriptors, and the "Gene Ontology (GO)" column, which has [Gene Ontology](http://geneontology.org/) (GO) Ids that describe subcellular locations. The Ids are extracted, put into a list, and into new columns. 
 
 
 ```python
+# get the mass as a float
+fullProtDF["flMass"] = fullProtDF["Mass"].apply(lambda x: float(str(x).replace(",","")) if ~pd.isna(x) else None)
+
 # process into list of MIM ids
 def getMIM(s):
     if pd.isna(s):
@@ -780,162 +786,7 @@ def getMIM(s):
     else:
         return re.findall("\[MIM:(\d+)\]", s)
 fullProtDF["MIM"] = fullProtDF["Involvement in disease"].apply(getMIM)
-display(fullProtDF.head())
 
-```
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>innateDB_ID</th>
-      <th>alias</th>
-      <th>UniprotID</th>
-      <th>Entry</th>
-      <th>Entry name</th>
-      <th>Organism</th>
-      <th>Mass</th>
-      <th>Length</th>
-      <th>Tissue specificity</th>
-      <th>Involvement in disease</th>
-      <th>Subcellular location [CC]</th>
-      <th>Gene ontology (GO)</th>
-      <th>Domain [CC]</th>
-      <th>Protein families</th>
-      <th>Domain [FT]</th>
-      <th>Degree_Centrality</th>
-      <th>flMass</th>
-      <th>MIM</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>innatedb:IDBG-1</td>
-      <td>refseq:NP_003131|uniprotkb:Q05066|uniprotkb:SR...</td>
-      <td>Q05066</td>
-      <td>Q05066</td>
-      <td>SRY_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>23,884</td>
-      <td>204.0</td>
-      <td>NaN</td>
-      <td>DISEASE: 46,XY sex reversal 1 (SRXY1) [MIM:400...</td>
-      <td>SUBCELLULAR LOCATION: Nucleus speckle {ECO:000...</td>
-      <td>chromatin [GO:0000785]; cytoplasm [GO:0005737]...</td>
-      <td>DOMAIN: DNA binding and bending properties of ...</td>
-      <td>SRY family</td>
-      <td>NaN</td>
-      <td>0.000953</td>
-      <td>23884.0</td>
-      <td>[400044, 400045]</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>innatedb:IDBG-100000</td>
-      <td>uniprotkb:LPAR3_HUMAN|refseq:NP_036284|uniprot...</td>
-      <td>Q9UBY5</td>
-      <td>Q9UBY5</td>
-      <td>LPAR3_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>40,128</td>
-      <td>353.0</td>
-      <td>TISSUE SPECIFICITY: Most abundantly expressed ...</td>
-      <td>NaN</td>
-      <td>SUBCELLULAR LOCATION: Cell membrane; Multi-pas...</td>
-      <td>axon [GO:0030424]; cytoplasm [GO:0005737]; int...</td>
-      <td>NaN</td>
-      <td>G-protein coupled receptor 1 family</td>
-      <td>NaN</td>
-      <td>0.000079</td>
-      <td>40128.0</td>
-      <td>None</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>innatedb:IDBG-100012</td>
-      <td>uniprotkb:Q8IWG1|uniprotkb:WDR63_HUMAN|refseq:...</td>
-      <td>Q8IWG1</td>
-      <td>Q8IWG1</td>
-      <td>DNAI3_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>102,935</td>
-      <td>891.0</td>
-      <td>NaN</td>
-      <td>DISEASE: Note=A rare heterozygous in-frame DNA...</td>
-      <td>SUBCELLULAR LOCATION: Cytoplasm {ECO:0000269|P...</td>
-      <td>axonemal dynein complex [GO:0005858]; cytoplas...</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>0.000040</td>
-      <td>102935.0</td>
-      <td>[]</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>innatedb:IDBG-10002</td>
-      <td>refseq:NP_056518|uniprotkb:Q9Y3A4|uniprotkb:RR...</td>
-      <td>Q9Y3A4</td>
-      <td>Q9Y3A4</td>
-      <td>RRP7A_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>32,334</td>
-      <td>280.0</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>CURI complex [GO:0032545]; cytoplasm [GO:00057...</td>
-      <td>NaN</td>
-      <td>RRP7 family</td>
-      <td>DOMAIN 61..90;  /note="RRM"</td>
-      <td>0.001033</td>
-      <td>32334.0</td>
-      <td>None</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>innatedb:IDBG-100021</td>
-      <td>uniprotkb:MCLN3_HUMAN|uniprotkb:Q8TDD5|refseq:...</td>
-      <td>Q8TDD5</td>
-      <td>Q8TDD5</td>
-      <td>MCLN3_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>64,248</td>
-      <td>553.0</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>SUBCELLULAR LOCATION: Cell membrane {ECO:00002...</td>
-      <td>autophagosome membrane [GO:0000421]; early end...</td>
-      <td>DOMAIN: The most N-terminal extracellular/lume...</td>
-      <td>Transient receptor (TC 1.A.4) family, Polycyst...</td>
-      <td>NaN</td>
-      <td>0.000079</td>
-      <td>64248.0</td>
-      <td>None</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-```python
 # process domain column into list of IDs
 def getDOM(s):
     if pd.isna(s):
@@ -943,168 +794,7 @@ def getDOM(s):
     else:
         return re.findall('/note="([\w\s-]+)"', s)
 fullProtDF["Domain_ID"] = fullProtDF["Domain [FT]"].apply(getDOM)
-display(fullProtDF.head())
 
-```
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>innateDB_ID</th>
-      <th>alias</th>
-      <th>UniprotID</th>
-      <th>Entry</th>
-      <th>Entry name</th>
-      <th>Organism</th>
-      <th>Mass</th>
-      <th>Length</th>
-      <th>Tissue specificity</th>
-      <th>Involvement in disease</th>
-      <th>Subcellular location [CC]</th>
-      <th>Gene ontology (GO)</th>
-      <th>Domain [CC]</th>
-      <th>Protein families</th>
-      <th>Domain [FT]</th>
-      <th>Degree_Centrality</th>
-      <th>flMass</th>
-      <th>MIM</th>
-      <th>Domain_ID</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>innatedb:IDBG-1</td>
-      <td>refseq:NP_003131|uniprotkb:Q05066|uniprotkb:SR...</td>
-      <td>Q05066</td>
-      <td>Q05066</td>
-      <td>SRY_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>23,884</td>
-      <td>204.0</td>
-      <td>NaN</td>
-      <td>DISEASE: 46,XY sex reversal 1 (SRXY1) [MIM:400...</td>
-      <td>SUBCELLULAR LOCATION: Nucleus speckle {ECO:000...</td>
-      <td>chromatin [GO:0000785]; cytoplasm [GO:0005737]...</td>
-      <td>DOMAIN: DNA binding and bending properties of ...</td>
-      <td>SRY family</td>
-      <td>NaN</td>
-      <td>0.000953</td>
-      <td>23884.0</td>
-      <td>[400044, 400045]</td>
-      <td>None</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>innatedb:IDBG-100000</td>
-      <td>uniprotkb:LPAR3_HUMAN|refseq:NP_036284|uniprot...</td>
-      <td>Q9UBY5</td>
-      <td>Q9UBY5</td>
-      <td>LPAR3_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>40,128</td>
-      <td>353.0</td>
-      <td>TISSUE SPECIFICITY: Most abundantly expressed ...</td>
-      <td>NaN</td>
-      <td>SUBCELLULAR LOCATION: Cell membrane; Multi-pas...</td>
-      <td>axon [GO:0030424]; cytoplasm [GO:0005737]; int...</td>
-      <td>NaN</td>
-      <td>G-protein coupled receptor 1 family</td>
-      <td>NaN</td>
-      <td>0.000079</td>
-      <td>40128.0</td>
-      <td>None</td>
-      <td>None</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>innatedb:IDBG-100012</td>
-      <td>uniprotkb:Q8IWG1|uniprotkb:WDR63_HUMAN|refseq:...</td>
-      <td>Q8IWG1</td>
-      <td>Q8IWG1</td>
-      <td>DNAI3_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>102,935</td>
-      <td>891.0</td>
-      <td>NaN</td>
-      <td>DISEASE: Note=A rare heterozygous in-frame DNA...</td>
-      <td>SUBCELLULAR LOCATION: Cytoplasm {ECO:0000269|P...</td>
-      <td>axonemal dynein complex [GO:0005858]; cytoplas...</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>0.000040</td>
-      <td>102935.0</td>
-      <td>[]</td>
-      <td>None</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>innatedb:IDBG-10002</td>
-      <td>refseq:NP_056518|uniprotkb:Q9Y3A4|uniprotkb:RR...</td>
-      <td>Q9Y3A4</td>
-      <td>Q9Y3A4</td>
-      <td>RRP7A_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>32,334</td>
-      <td>280.0</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>CURI complex [GO:0032545]; cytoplasm [GO:00057...</td>
-      <td>NaN</td>
-      <td>RRP7 family</td>
-      <td>DOMAIN 61..90;  /note="RRM"</td>
-      <td>0.001033</td>
-      <td>32334.0</td>
-      <td>None</td>
-      <td>[RRM]</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>innatedb:IDBG-100021</td>
-      <td>uniprotkb:MCLN3_HUMAN|uniprotkb:Q8TDD5|refseq:...</td>
-      <td>Q8TDD5</td>
-      <td>Q8TDD5</td>
-      <td>MCLN3_HUMAN</td>
-      <td>Homo sapiens (Human)</td>
-      <td>64,248</td>
-      <td>553.0</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>SUBCELLULAR LOCATION: Cell membrane {ECO:00002...</td>
-      <td>autophagosome membrane [GO:0000421]; early end...</td>
-      <td>DOMAIN: The most N-terminal extracellular/lume...</td>
-      <td>Transient receptor (TC 1.A.4) family, Polycyst...</td>
-      <td>NaN</td>
-      <td>0.000079</td>
-      <td>64248.0</td>
-      <td>None</td>
-      <td>None</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-```python
 # process to get GO IDs
 def getGO(s):
     if pd.isna(s):
@@ -1112,6 +802,7 @@ def getGO(s):
     else:
         return re.findall("\[GO:(\d+)\]", s)
 fullProtDF["GO_ID"] = fullProtDF["Gene ontology (GO)"].apply(getGO)
+
 display(fullProtDF.head())
 
 ```
@@ -1153,8 +844,6 @@ display(fullProtDF.head())
       <th>Degree_Centrality</th>
       <th>flMass</th>
       <th>MIM</th>
-      <th>Domain_ID</th>
-      <th>GO_ID</th>
     </tr>
   </thead>
   <tbody>
@@ -1178,8 +867,6 @@ display(fullProtDF.head())
       <td>0.000953</td>
       <td>23884.0</td>
       <td>[400044, 400045]</td>
-      <td>None</td>
-      <td>[0000785, 0005737, 0016607, 0005654, 0005634, ...</td>
     </tr>
     <tr>
       <th>1</th>
@@ -1201,8 +888,6 @@ display(fullProtDF.head())
       <td>0.000079</td>
       <td>40128.0</td>
       <td>None</td>
-      <td>None</td>
-      <td>[0030424, 0005737, 0005887, 0005886, 0045202, ...</td>
     </tr>
     <tr>
       <th>2</th>
@@ -1224,8 +909,6 @@ display(fullProtDF.head())
       <td>0.000040</td>
       <td>102935.0</td>
       <td>[]</td>
-      <td>None</td>
-      <td>[0005858, 0005737, 0036156, 0071933, 0045504, ...</td>
     </tr>
     <tr>
       <th>3</th>
@@ -1247,8 +930,6 @@ display(fullProtDF.head())
       <td>0.001033</td>
       <td>32334.0</td>
       <td>None</td>
-      <td>[RRM]</td>
-      <td>[0032545, 0005737, 0005654, 0034456, 0003723, ...</td>
     </tr>
     <tr>
       <th>4</th>
@@ -1270,53 +951,31 @@ display(fullProtDF.head())
       <td>0.000079</td>
       <td>64248.0</td>
       <td>None</td>
-      <td>None</td>
-      <td>[0000421, 0031901, 0016021, 0031902, 0005765, ...</td>
     </tr>
   </tbody>
 </table>
 </div>
 
 
-
-```python
-# get the mass as a float
-fullProtDF["flMass"] = fullProtDF["Mass"].apply(lambda x: float(str(x).replace(",","")) if ~pd.isna(x) else None)
-
-```
+### Graph Centrality Data
+Now that we have useful forms of the protein characteristics, we want to get measures of centrality on the nodes in our network. To do this, we make use of the networkx centrality algorithms. We compute the measure of centrality, and add it as a column to our dataframe. For our measures of centrality, we chose degree, closeness, and eigenvector, as these are some of the most common forms of measuring centrality. Betweenness was left out due to computational limitations.
 
 
 ```python
-
-```
-
-
-```python
-
-
 # getting the graph from the edge list
 G = nx.Graph(list(np.array(edgeListNoSelf)))
-```
 
-
-```python
 # adding measures of centrality to the data frame
 # degree centrality
 a = nx.degree_centrality(G)
 fullProtDF["Degree_Centrality"] = fullProtDF["innateDB_ID"].apply(lambda x: a.get(x))
 
-```
 
-
-```python
 # closeness centrality
 a = nx.closeness_centrality(G)
 fullProtDF["Closeness_Centrality"] = fullProtDF["innateDB_ID"].apply(lambda x: a.get(x))
 
-```
 
-
-```python
 # eigenvector centrality
 a = nx.eigenvector_centrality(G)
 fullProtDF["Eigenvector_Centrality"] = fullProtDF["innateDB_ID"].apply(lambda x: a.get(x))
@@ -1501,7 +1160,8 @@ display(fullProtDF.head())
 </div>
 
 
-## Linear Regression Time
+## Linear Regression
+Having gotten measures of centrality, we would like to compare the protein characteristics with the measures of centrality via a linear regression. Our list of ids is insufficient for this, as a linear regression does not work with categorical data, to make the data usable, we take the length of the lists, so that we can compare the centrality with the number of domains, genetic diseases, and subcellular locations. 
 
 
 ```python
@@ -1534,6 +1194,11 @@ for i in fullProtDF["GO_ID"]:
                 GOList.append(j)
 print(len(GOList))
 ```
+
+    2072
+    5293
+    18911
+
 
 
 ```python
@@ -1736,48 +1401,7 @@ display(fullProtDF.head())
 </div>
 
 
-
-```python
-# applying a linear regression
-a = ~pd.isna(fullProtDF["flMass"])
-b = ~pd.isna(fullProtDF["Degree_Centrality"])
-
-x = np.array(fullProtDF[a & b]["flMass"]).reshape(-1,1)
-y = np.array(fullProtDF[a & b]["Degree_Centrality"]).reshape(-1,1)
-s = sm.OLS(y, x).fit()
-```
-
-
-```python
-print(s.summary())
-```
-
-                                     OLS Regression Results                                
-    =======================================================================================
-    Dep. Variable:                      y   R-squared (uncentered):                   0.021
-    Model:                            OLS   Adj. R-squared (uncentered):              0.021
-    Method:                 Least Squares   F-statistic:                              513.5
-    Date:                Mon, 16 May 2022   Prob (F-statistic):                   1.73e-112
-    Time:                        16:54:59   Log-Likelihood:                      1.0111e+05
-    No. Observations:               23594   AIC:                                 -2.022e+05
-    Df Residuals:                   23593   BIC:                                 -2.022e+05
-    Df Model:                           1                                                  
-    Covariance Type:            nonrobust                                                  
-    ==============================================================================
-                     coef    std err          t      P>|t|      [0.025      0.975]
-    ------------------------------------------------------------------------------
-    x1          5.063e-09   2.23e-10     22.661      0.000    4.62e-09     5.5e-09
-    ==============================================================================
-    Omnibus:                    86263.755   Durbin-Watson:                   1.977
-    Prob(Omnibus):                  0.000   Jarque-Bera (JB):      74785633831.254
-    Skew:                          77.137   Prob(JB):                         0.00
-    Kurtosis:                    8723.592   Cond. No.                         1.00
-    ==============================================================================
-    
-    Notes:
-    [1] R² is computed without centering (uncentered) since the model does not contain a constant.
-    [2] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-
+Having added the list lengths to our dataframe, we would like to start by doing linear regressions to compare individual parameters. To do this, we make a list of each possible pair of parameters, and then make a list of linear regression solutions for each of them. Finally, we make a histogram showing the distribution in r-squared values, which are indicators of a good fit.
 
 
 ```python
@@ -1788,39 +1412,8 @@ pairs = []
 for i in range(len(linearRegressList)-1):
     for j in range(i+1):
         pairs.append((linearRegressList[i+1], linearRegressList[j]))
-        print((linearRegressList[i+1], linearRegressList[j]))
 
 ```
-
-    ('Length', 'flMass')
-    ('Degree_Centrality', 'flMass')
-    ('Degree_Centrality', 'Length')
-    ('Closeness_Centrality', 'flMass')
-    ('Closeness_Centrality', 'Length')
-    ('Closeness_Centrality', 'Degree_Centrality')
-    ('Eigenvector_Centrality', 'flMass')
-    ('Eigenvector_Centrality', 'Length')
-    ('Eigenvector_Centrality', 'Degree_Centrality')
-    ('Eigenvector_Centrality', 'Closeness_Centrality')
-    ('numMIM', 'flMass')
-    ('numMIM', 'Length')
-    ('numMIM', 'Degree_Centrality')
-    ('numMIM', 'Closeness_Centrality')
-    ('numMIM', 'Eigenvector_Centrality')
-    ('numDOM', 'flMass')
-    ('numDOM', 'Length')
-    ('numDOM', 'Degree_Centrality')
-    ('numDOM', 'Closeness_Centrality')
-    ('numDOM', 'Eigenvector_Centrality')
-    ('numDOM', 'numMIM')
-    ('numGO', 'flMass')
-    ('numGO', 'Length')
-    ('numGO', 'Degree_Centrality')
-    ('numGO', 'Closeness_Centrality')
-    ('numGO', 'Eigenvector_Centrality')
-    ('numGO', 'numMIM')
-    ('numGO', 'numDOM')
-
 
 
 ```python
@@ -1838,117 +1431,29 @@ for i in pairs:
 
 
 ```python
-# print out the pairs, along with their coefficients and r squared values
-for i in range(len(regressSols)):
-    print(pairs[i])
-    print(f"Coefficient: {regressSols[i].params[0]:.2e}, rsquared: {regressSols[i].rsquared:.2f}\n")
-
-```
-
-    ('Length', 'flMass')
-    Coefficient: 2.38e+02, rsquared: 1.00
-    
-    ('Degree_Centrality', 'flMass')
-    Coefficient: 6.69e+04, rsquared: 0.00
-    
-    ('Degree_Centrality', 'Length')
-    Coefficient: 6.01e+02, rsquared: 0.00
-    
-    ('Closeness_Centrality', 'flMass')
-    Coefficient: 3.81e+04, rsquared: 0.00
-    
-    ('Closeness_Centrality', 'Length')
-    Coefficient: 3.45e+02, rsquared: 0.00
-    
-    ('Closeness_Centrality', 'Degree_Centrality')
-    Coefficient: -3.06e-03, rsquared: 0.04
-    
-    ('Eigenvector_Centrality', 'flMass')
-    Coefficient: 6.59e+04, rsquared: 0.00
-    
-    ('Eigenvector_Centrality', 'Length')
-    Coefficient: 5.92e+02, rsquared: 0.00
-    
-    ('Eigenvector_Centrality', 'Degree_Centrality')
-    Coefficient: -5.50e-04, rsquared: 0.61
-    
-    ('Eigenvector_Centrality', 'Closeness_Centrality')
-    Coefficient: 2.93e-01, rsquared: 0.23
-    
-    ('numMIM', 'flMass')
-    Coefficient: 6.93e+04, rsquared: 0.01
-    
-    ('numMIM', 'Length')
-    Coefficient: 6.19e+02, rsquared: 0.01
-    
-    ('numMIM', 'Degree_Centrality')
-    Coefficient: 7.47e-04, rsquared: 0.01
-    
-    ('numMIM', 'Closeness_Centrality')
-    Coefficient: 3.32e-01, rsquared: 0.00
-    
-    ('numMIM', 'Eigenvector_Centrality')
-    Coefficient: 4.35e-03, rsquared: 0.01
-    
-    ('numDOM', 'flMass')
-    Coefficient: 5.29e+04, rsquared: 0.49
-    
-    ('numDOM', 'Length')
-    Coefficient: 4.73e+02, rsquared: 0.50
-    
-    ('numDOM', 'Degree_Centrality')
-    Coefficient: 7.78e-04, rsquared: 0.00
-    
-    ('numDOM', 'Closeness_Centrality')
-    Coefficient: 3.11e-01, rsquared: 0.00
-    
-    ('numDOM', 'Eigenvector_Centrality')
-    Coefficient: 3.09e-03, rsquared: 0.00
-    
-    ('numDOM', 'numMIM')
-    Coefficient: 1.53e+00, rsquared: 0.01
-    
-    ('numGO', 'flMass')
-    Coefficient: 6.08e+04, rsquared: 0.01
-    
-    ('numGO', 'Length')
-    Coefficient: 5.45e+02, rsquared: 0.01
-    
-    ('numGO', 'Degree_Centrality')
-    Coefficient: 1.43e-04, rsquared: 0.03
-    
-    ('numGO', 'Closeness_Centrality')
-    Coefficient: 3.03e-01, rsquared: 0.01
-    
-    ('numGO', 'Eigenvector_Centrality')
-    Coefficient: 1.94e-03, rsquared: 0.02
-    
-    ('numGO', 'numMIM')
-    Coefficient: 1.15e+00, rsquared: 0.08
-    
-    ('numGO', 'numDOM')
-    Coefficient: 2.01e+00, rsquared: 0.00
-    
-
-
-
-```python
 # making a histogram of the r-squared values
+fnt = 15
 rSq = np.array([i.rsquared for i in regressSols])
-plt.figure()
+plt.figure(figsize = [10,8])
 plt.hist(rSq, bins = 30)
+plt.grid(True, linestyle = "--")
+plt.xlabel(r"$R^2$", fontsize = fnt)
+plt.ylabel("Frequency", fontsize = fnt)
+plt.title(r"$R^2$ Distribution", fontsize = fnt)
 plt.show()
 ```
 
 
     
-![png](output_36_0.png)
+![png](output_28_0.png)
     
 
 
+We see that some of the parameters have an r squared of greater than .2. We expect the r squared close to 1 to be the Mass Length relationship, as the longer the protein chain, the heavier it is. We plot the Fits on the data for the parameter pairs with an r squared of greater than .2.
+
 
 ```python
-rsqCutoff = .03
+rsqCutoff = .2
 nrsq = (rSq > rsqCutoff).sum()
 print(f"Number of pairs with an r squared greater than .4: {nrsq}")
 # print out the pairs, along with their coefficients and r squared values
@@ -1958,14 +1463,12 @@ for i in range(len(regressSols)):
         
 ```
 
-    Number of pairs with an r squared greater than .4: 7
+    Number of pairs with an r squared greater than .4: 5
     ('Length', 'flMass')
-    ('Closeness_Centrality', 'Degree_Centrality')
     ('Eigenvector_Centrality', 'Degree_Centrality')
     ('Eigenvector_Centrality', 'Closeness_Centrality')
     ('numDOM', 'flMass')
     ('numDOM', 'Length')
-    ('numGO', 'numMIM')
 
 
 
@@ -1993,11 +1496,10 @@ plt.show()
 
 
     
-![png](output_38_0.png)
+![png](output_31_0.png)
     
 
 
-
-```python
-
-```
+It seems that significant correlations presented are lacking in new information. The number of domains is also expected to correspond with the mass/length of the protein, as a larger protein means more subregions in the protein. In addition, the relation between the measures of centrality is also expected, as they do all measure the same idea of a node being central or important in the graph. 
+## Conclusion/Future Work
+In conclusion, there are no obvious relationships between the location of a protein in an interaction network and the strucutural/locational properties of the protein. In hindsight, that makes a certain amount of sense. A protein may be a part of many pathways, not due to its size or number of domains, but due to how often the function of the protein is necessary. To further investigate this, it would be prudent to observe whether certain pathways or functions correlate with protein centrality. Furthermore, getting details that correspond with the Domain labels, MIM ids, or GO ids from the proteins (i.e. is the centrality for proteins involved in this genetic disease different from proteins involved in that genetic disease). Finally, as proteins have several labels, machine learning may be useful as a predictor of any one label using all the other data. 
