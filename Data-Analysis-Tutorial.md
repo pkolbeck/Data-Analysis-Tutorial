@@ -1,14 +1,16 @@
-TODO: REVISE
-# Data Analysis Tutorial - Innate Immune System Proteins
-In this tutorial, we will be looking at the set of protein interactions in the innate immune system, and see if we can find any trends between the graphical properties of proteins in the interaction network and their biological properties. 
+# Investigating the Properties of Central Proteins in an Interaction Network
+By: Paul Kolbeck
 
-## Initial Guesses
-Before we begin looking for or analyzing data, we set some goals to provide direction, and so we make some theories. 
-For the graphical properties, we can look at the degree of a protein (how many proteins this protein interacts with), and degrees of centrality, such as how many paths go through this protein. 
-On the biological side, scientists have been able to take measurements on a massive number of proteins. Proteins are a sequence of amino acids that have folded in a particular way to act as catalysts for various chemical processes. One of the main things measured for a protein is its sequence, ie the composition of the string of amino acids. These sequences can be on the order of 100 amino acids long, and with 20 different amino acids and possibly several ways of folding the chain into a 3d shape, trying to analyze the sequence outside of possibly the number of amino acids present is outside the scope of this project. 
-Other properties include the mass and length of a protein, the domains (3d substructures) in the protein, the biological processes it is involved in, and the locations in the tissue. 
+Proteins are large molecules inside of organisms that fulfill a huge variety of functions within organisms. All of biological life hinges on the functions of proteins within organisms. From viruses to whales and everything in between, living beings are basically a collection of proteins that, through complex interactions and mechanisms, ensure the continuation of their own existence. As proteins are an underlying part of all biological processes, understanding proteins and their interactions is an important portion research in biology. 
 
-We predict that proteins with a high degree, or degree of centrality will likely be larger, so as to have more locations on the protein where an interaction can take place. Further, we predict that these proteins will likely be spread out in the cell and the tissue, being present in multiple tissues/subcellular regions instead of just one or two. With more interactions, we also predict that the proteins will be involved in more biological processes. 
+Proteins are created when a ribosome (a type of protein complex) takes in a gene sequence in the from of a strand of messenger RNA (mRNA), which was transcripted from the DNA in the nucleus of the cell, and starts an amino acid chain. Amino acids are the building blocks of proteins, and are small organic compounds that have binding sites on them that allow them to be bound together in a chain. As the ribosome travels along the mRNA strand, it encounters a sequence of triplets of bases, known as codons. Each codon corresponds to an amino acid, which the ribosome then takes from the surrounding supply and attaches to the budding amino acid chain in the order in which the codons appear. Thus, the mRNA strand is used to build a new sequence of amino acids. This sequence of amino acids then folds into a 3d shape, which then has complex properties based on the sequence of amino acids and how it folded. 
+
+Not only are the proteins themselves complex, but they exist within a sea of other proteins with which they may interact, giving rise to a network of interactions which further infuence the functionality of proteins. As the environments change, so does the function of a protein, so a protein that is a part of one set of interactions in a liver that allow the liver to grow back, may be part of a different set of interactions in skeletal muscle that allow the muscle to contract. Mapping these interactions is thus another integral part in understanding the biological processes in an organism.
+
+In this tutorial, our goal is to investigate possible relationships between several protein characteristics, particularly their role in an interaction network and their structure. For example, one might predict that the number of pathways a protein is a part of may correlate to the number of active sites on a protein, which further correlates with the mass (i.e. size). TODO
+
+## Tools
+For this analysis, we use Python 3, along with external packages numpy, pandas, matplotlib, networkx, and statsmodel. TODO
 
 
 ```python
@@ -20,21 +22,24 @@ import networkx as nx
 import re
 import requests
 from bs4 import BeautifulSoup
-from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
 import io
 import time
+import warnings
+warnings.filterwarnings("ignore")
 ```
 
-TODO: WHERE IS DATA FROM
+## Gathering and Cleaning Data
+For this tutorial, we chose to use the interaction network data provided by [Innatedb](https://www.innatedb.com/). Innatedb is a database of genes, interactions, and signaling pathways related to the innate immune response of human beings. This was chosen so as to provide a sample of the protein interaction network in the human body with a fleshed out interaction network. As this is a biased sample of the population of all proteins in the human body, results derived from the analysis will only definitively apply to this subset of data, but may inform further investigation in other portions of the human protein interaction network. 
+
+### Acquiring the Innatedb Data
+The InnateDB database is only on the order of a hundred Megabytes, so downloading and importing the entire database was taken as the easiest and cleanest way to work with the database. The data from Innatedb was downloaded as a gz zipped file, extracted, and imported using pandas ```read_csv``` method.
 
 
 ```python
 # Making a dataframe out of the innate immune system data file, and getting characteristics from it. 
-
 interactionDF = pd.read_csv("./all.mitab/all.mitab", sep = "\t")
 print(interactionDF.info())
-pd.set_option('display.max_rows', None, 'display.max_columns', None)
-display(interactionDF.head())
 ```
 
     <class 'pandas.core.frame.DataFrame'>
@@ -89,301 +94,7 @@ display(interactionDF.head())
     None
 
 
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>#unique_identifier_A</th>
-      <th>unique_identifier_B</th>
-      <th>alt_identifier_A</th>
-      <th>alt_identifier_B</th>
-      <th>alias_A</th>
-      <th>alias_B</th>
-      <th>interaction_detection_method</th>
-      <th>author</th>
-      <th>pmid</th>
-      <th>ncbi_taxid_A</th>
-      <th>ncbi_taxid_B</th>
-      <th>interaction_type</th>
-      <th>source_database</th>
-      <th>idinteraction_in_source_db</th>
-      <th>confidence_score</th>
-      <th>expansion_method</th>
-      <th>biological_role_A</th>
-      <th>biological_role_B</th>
-      <th>exp_role_A</th>
-      <th>exp_role_B</th>
-      <th>interactor_type_A</th>
-      <th>interactor_type_B</th>
-      <th>xrefs_A</th>
-      <th>xrefs_B</th>
-      <th>xrefs_interaction</th>
-      <th>annotations_A</th>
-      <th>annotations_B</th>
-      <th>annotations_interaction</th>
-      <th>ncbi_taxid_host_organism</th>
-      <th>parameters_interaction</th>
-      <th>creation_date</th>
-      <th>update_date</th>
-      <th>checksum_A</th>
-      <th>checksum_B</th>
-      <th>checksum_interaction</th>
-      <th>negative</th>
-      <th>features_A</th>
-      <th>features_B</th>
-      <th>stoichiometry_A</th>
-      <th>stoichiometry_B</th>
-      <th>participant_identification_method_A</th>
-      <th>participant_identification_method_B</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>innatedb:IDBG-90895</td>
-      <td>innatedb:IDBG-90895</td>
-      <td>ensembl:ENSG00000132906</td>
-      <td>ensembl:ENSG00000132906</td>
-      <td>uniprotkb:CASP9_HUMAN|refseq:NP_127463|uniprot...</td>
-      <td>uniprotkb:CASP9_HUMAN|refseq:NP_127463|uniprot...</td>
-      <td>psi-mi:"MI:0114"(x-ray crystallography)</td>
-      <td>Renatus et al. (2001)</td>
-      <td>pubmed:11734640</td>
-      <td>taxid:9606(Human)</td>
-      <td>taxid:9606(Human)</td>
-      <td>psi-mi:"MI:0915"(physical association)</td>
-      <td>MI:0462(bind)</td>
-      <td>BIND:100139</td>
-      <td>lpr:4|hpr:4|np:1|</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>comment:"BIND interaction division: BIND-3DBP; "</td>
-      <td>taxid:0</td>
-      <td>-</td>
-      <td>2014/11/29</td>
-      <td>2014/11/29</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>False</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0363"(inferred by author)</td>
-      <td>psi-mi:"MI:0363"(inferred by author)</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>innatedb:IDBG-90895</td>
-      <td>innatedb:IDBG-90895</td>
-      <td>ensembl:ENSG00000132906</td>
-      <td>ensembl:ENSG00000132906</td>
-      <td>uniprotkb:CASP9_HUMAN|refseq:NP_127463|uniprot...</td>
-      <td>uniprotkb:CASP9_HUMAN|refseq:NP_127463|uniprot...</td>
-      <td>psi-mi:"MI:0114"(x-ray crystallography)</td>
-      <td>Renatus et al. (2001)</td>
-      <td>pubmed:11734640</td>
-      <td>taxid:9606(Human)</td>
-      <td>taxid:9606(Human)</td>
-      <td>psi-mi:"MI:0915"(physical association)</td>
-      <td>MI:0462(bind)</td>
-      <td>BIND:100140</td>
-      <td>lpr:4|hpr:4|np:1|</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>comment:"BIND interaction division: BIND-3DBP; "</td>
-      <td>taxid:0</td>
-      <td>-</td>
-      <td>2014/11/29</td>
-      <td>2014/11/29</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>False</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0363"(inferred by author)</td>
-      <td>psi-mi:"MI:0363"(inferred by author)</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>innatedb:IDBG-90895</td>
-      <td>innatedb:IDBG-90895</td>
-      <td>ensembl:ENSG00000132906</td>
-      <td>ensembl:ENSG00000132906</td>
-      <td>uniprotkb:CASP9_HUMAN|refseq:NP_127463|uniprot...</td>
-      <td>uniprotkb:CASP9_HUMAN|refseq:NP_127463|uniprot...</td>
-      <td>psi-mi:"MI:0114"(x-ray crystallography)</td>
-      <td>Renatus et al. (2001)</td>
-      <td>pubmed:11734640</td>
-      <td>taxid:9606(Human)</td>
-      <td>taxid:9606(Human)</td>
-      <td>psi-mi:"MI:0915"(physical association)</td>
-      <td>MI:0462(bind)</td>
-      <td>BIND:100141</td>
-      <td>lpr:4|hpr:4|np:1|</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>comment:"BIND interaction division: BIND-3DBP; "</td>
-      <td>taxid:0</td>
-      <td>-</td>
-      <td>2014/11/29</td>
-      <td>2014/11/29</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>False</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0363"(inferred by author)</td>
-      <td>psi-mi:"MI:0363"(inferred by author)</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>innatedb:IDBG-96746</td>
-      <td>innatedb:IDBG-73725</td>
-      <td>ensembl:ENSG00000084072</td>
-      <td>ensembl:ENSG00000118058</td>
-      <td>refseq:NP_982281|uniprotkb:PPIE_HUMAN|uniprotk...</td>
-      <td>uniprotkb:MLL1_HUMAN|refseq:NP_005924|uniprotk...</td>
-      <td>psi-mi:"MI:0018"(two hybrid)</td>
-      <td>Fair et al.(2001)</td>
-      <td>pubmed:11313484</td>
-      <td>taxid:9606(Human)</td>
-      <td>taxid:9606(Human)</td>
-      <td>psi-mi:"MI:0915"(physical association)</td>
-      <td>MI:0463(biogrid)</td>
-      <td>BIOGRID:10022</td>
-      <td>lpr:6|hpr:6|np:1|</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0498"(prey)</td>
-      <td>psi-mi:"MI:0496"(bait)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>comment:"BioGRID Evidence Code: Two-hybrid; "</td>
-      <td>taxid:32644</td>
-      <td>-</td>
-      <td>2014/11/29</td>
-      <td>2014/11/29</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>False</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0396"(predetermined participant)</td>
-      <td>psi-mi:"MI:0396"(predetermined participant)</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>innatedb:IDBG-75670</td>
-      <td>innatedb:IDBG-75670</td>
-      <td>ensembl:ENSG00000148090</td>
-      <td>ensembl:ENSG00000148090</td>
-      <td>uniprotkb:AUHM_HUMAN|refseq:NP_001689|uniprotk...</td>
-      <td>uniprotkb:AUHM_HUMAN|refseq:NP_001689|uniprotk...</td>
-      <td>psi-mi:"MI:0114"(x-ray crystallography)</td>
-      <td>Kurimoto et al. (2001)</td>
-      <td>pubmed:11738050</td>
-      <td>taxid:9606(Human)</td>
-      <td>taxid:9606(Human)</td>
-      <td>psi-mi:"MI:0915"(physical association)</td>
-      <td>MI:0462(bind)</td>
-      <td>BIND:100224</td>
-      <td>lpr:6|hpr:6|np:1|</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0499"(unspecified role)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>psi-mi:"MI:0326"(protein)</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>comment:"BIND interaction division: BIND-3DBP; "</td>
-      <td>taxid:0</td>
-      <td>-</td>
-      <td>2014/11/29</td>
-      <td>2014/11/29</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>False</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>psi-mi:"MI:0363"(inferred by author)</td>
-      <td>psi-mi:"MI:0363"(inferred by author)</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-TODO: TAKE A LOOK PROSE
+We see that we get a 131 MB dataframe, where each entry is an interaction. Each entry features a unique identifier created by InnateDB for proteins A and B, as well as several other identifiers. First, we'd like to check that we have a network. To do this, we are going to make a graph out of the first 2000 entries in the dataframe, as the function that draw the graph from matplotlib and networkx can't handle a graph with 400,000+ edges. 
 
 
 ```python
@@ -391,43 +102,41 @@ TODO: TAKE A LOOK PROSE
 edgeList = interactionDF[["#unique_identifier_A", "unique_identifier_B"]]
 # removing self interaction edges, to reduce clutter
 edgeListNoSelf = edgeList[edgeList["#unique_identifier_A"] != edgeList["unique_identifier_B"]]
-print(edgeListNoSelf.shape)
 G = nx.Graph(list(np.array(edgeListNoSelf.head(2000))))
 plt.figure(figsize = [30,15])
 subax1 = plt.subplot(121)
 nx.draw(G, node_size = 8)
 plt.show()
+```
+
+
+    
+![png](output_5_0.png)
+    
+
+
+Looking at the graph, we can see that there is one main component with a majority of the proteins, and several isolated components. These isolated components may be connected to the main component if we were to include the rest of the edges, but checking using the method of graphing is unreasonable. However, we can take a closer look at the main component, isolating it using networkx's ```connected_components``` algorithm. We change the node color to green and the edge color to red for better contrast.
+
+
+```python
 # getting the largest component
 S = [G.subgraph(c).copy() for c in nx.connected_components(G)]
 Sl = max(S, key=len)
-print(Sl.size())
 plt.figure(figsize = [30,15])
 subax1 = plt.subplot(121)
-nx.draw(Sl, node_size = 8, node_color = "green", edge_color = "red")
+nx.draw(Sl, node_size = 10, node_color = "green", edge_color = "red")
 plt.show()
 ```
 
-    (407990, 2)
-
-
 
     
-![png](output_5_1.png)
+![png](output_7_0.png)
     
 
 
-    1079
-
-
-
-    
-![png](output_5_3.png)
-    
-
-
-TODO: UNKNOWN VALUES, USEFUL COLUMNS. WANT MORE DATA ON PROTEIN: UNIPROTKB. GRAPH OBSERVATION
-## Uniprot
-Start by mapping proteins to uniprotkb ids
+Just from looking at this graph, we see that we have a variety of positions in the graph - measures of centrality should be varied. We can see that there are some nodes from which there are several edges (i.e. they have a high degree), while there are other nodes that only have one edge. Of course, this is only a component of whole graph, but it suggests that we should expect variance. 
+## Getting More Protein Characteristics - Uniprot Database
+We have confirmed that we have a network of protein interactions, which means that we have a means of getting measures of centrality for our proteins. However, we would like to compare these measures of centrality to other characteristics of the proteins, and the InnateDB database does not have any characteristics on the proteins themselves. However, the dataframe does supply additional IDs for the proteins, which can be used to query other databases for more information on the proteins. We chose to use the [Uniprot](https://www.uniprot.org/) database for our information on the proteins. The uniprot IDs are listed under the "alias_(A,B)" columns in the InnateDB data, along with a few other IDs. To acquire the Uniprot ID, we use a regular expression. Note that the "alias_(A,B)" actually contains both the Uniprot ID and the Uniprot Entry Name, so we add the '^_' to our regular expression to ensure we match on the ID. 
 
 
 ```python
@@ -438,11 +147,7 @@ def getUniprotkb(str):
         return r.group(1)
     else:
         return "NONE"
-```
 
-
-```python
-# TODO ADD LENGTH CHECKS
 # get mapping from innatedb unique identifier to uniprot ID
 aProts = (interactionDF["#unique_identifier_A"] + "->" + interactionDF["alias_A"]).unique()
 bProts = (interactionDF["unique_identifier_B"] + "->" + interactionDF["alias_B"]).unique()
@@ -452,12 +157,13 @@ protDF  = pd.DataFrame([i.split("->") for i in allProts], columns = ["innateDB_I
 protDF["UniprotID"] = protDF["alias"].apply(getUniprotkb)
 
 # Display head, get the number of entries without a uniprotID
+print(f"Number of unique innatedb ids: {len(protDF['innateDB_ID'].unique())}")
 print(f"{pd.isna(protDF['UniprotID']).sum()} entries are missing a uniprotID out of {protDF.shape[0]}")
 display(protDF.head())
-print(f"Number of unique innatedb ids: {len(protDF['innateDB_ID'].unique())}")
 
 ```
 
+    Number of unique innatedb ids: 25271
     0 entries are missing a uniprotID out of 25271
 
 
@@ -521,11 +227,9 @@ print(f"Number of unique innatedb ids: {len(protDF['innateDB_ID'].unique())}")
 </div>
 
 
-    Number of unique innatedb ids: 25271
-
-
+We have a Uniprot ID for every InnateDB ID! This means we don't have to handle any missing values yet. 
 ### Querying
-now we query uniprot TODO (describe API)
+Now we need to get the protein data from the Uniprot database. Uniprot is popular enough to luckily have an extensive API (TODO), which we take advantage of to query their database for information each protein. There is an upper limit on the number of individual ids that can be queried at the same time, so we divide the list of 25000+ IDs into blocks of length 100. The API also specifies that queries can be limited to certain columns, so we choose a set of columns relevant to our investigation. We chose the id again, the entry name, the organism (to confirm this is a human protein), the mass, the length, the tissue specificity, the disease involvement, the subcellular location, the gene ontology, the domains, the family and the domain extent. 
 
 
 ```python
@@ -550,15 +254,6 @@ fmt = "format=tab"
 
 
 ```python
-
-```
-
-    Progress
-    ____________________________________________________________________________________________________
-    ====================================================================================================
-
-
-```python
 # querying the database for information on the proteins
 colQuery = requests.get("https://www.uniprot.org/uniprot/?query=" + protDF[~pd.isna(protDF['UniprotID'])]['UniprotID'][0] + "&" + columns + "&" + fmt)
 temp = pd.read_csv(io.StringIO(colQuery.text), sep = "\t")
@@ -579,11 +274,30 @@ for i in range(len(proteinQueryList)):
 
 
 ```python
-print(uniprotDF.shape)
+print(uniprotDF.info())
 display(uniprotDF.head())
 ```
 
-    (23655, 12)
+    <class 'pandas.core.frame.DataFrame'>
+    Int64Index: 23655 entries, 0 to 23654
+    Data columns (total 12 columns):
+     #   Column                     Non-Null Count  Dtype  
+    ---  ------                     --------------  -----  
+     0   Entry                      23655 non-null  object 
+     1   Entry name                 23655 non-null  object 
+     2   Organism                   23617 non-null  object 
+     3   Mass                       23617 non-null  object 
+     4   Length                     23617 non-null  float64
+     5   Tissue specificity         12509 non-null  object 
+     6   Involvement in disease     4452 non-null   object 
+     7   Subcellular location [CC]  20868 non-null  object 
+     8   Gene ontology (GO)         23253 non-null  object 
+     9   Domain [CC]                5417 non-null   object 
+     10  Protein families           17655 non-null  object 
+     11  Domain [FT]                10999 non-null  object 
+    dtypes: float64(1), object(11)
+    memory usage: 2.3+ MB
+    None
 
 
 
@@ -700,11 +414,14 @@ display(uniprotDF.head())
 </div>
 
 
+We have successfully queried the database! We see that the columns can vary with the number of missing values. Further, by looking at some of the entries, we can already guess that they will be difficult to impossible to extract useful information from, as they are hand-written comments that use varied human language. The tissue specificity column, for example, has entries that read "not expressed in ..." This will be further investigated later in this tutorial. 
+### Merging
+Now, we would like to combine the InnateDB unique IDS with the Uniprot protein information. To do this, we do a left merge on the "UniprotID" column and the "Entry" column of the InnateDB IDs dataframe and the Uniprot dataframe. 
+
 
 ```python
 print(protDF.shape)
 print(uniprotDF.shape)
-
 display(protDF.head())
 display(uniprotDF.head())
 ```
@@ -1052,40 +769,7 @@ display(fullProtDF.head())
 </div>
 
 
-LOOK AT "INVOLVEMENT IN DISEASE", "GENE ONTOLOGY (GO)", "DOMAIN [FT]"
-
-
-```python
-getMIM(None)
-```
-
-
-    ---------------------------------------------------------------------------
-
-    TypeError                                 Traceback (most recent call last)
-
-    Input In [317], in <module>
-    ----> 1 getMIM(None)
-
-
-    Input In [316], in getMIM(str)
-          2 def getMIM(str):
-    ----> 3     return re.findall("\[MIM:(\d+)\]", str)
-
-
-    File /opt/conda/lib/python3.9/re.py:241, in findall(pattern, string, flags)
-        233 def findall(pattern, string, flags=0):
-        234     """Return a list of all non-overlapping matches in the string.
-        235 
-        236     If one or more capturing groups are present in the pattern, return
-       (...)
-        239 
-        240     Empty matches are included in the result."""
-    --> 241     return _compile(pattern, flags).findall(string)
-
-
-    TypeError: expected string or bytes-like object
-
+While each InnateDB
 
 
 ```python
@@ -1815,6 +1499,502 @@ display(fullProtDF.head())
   </tbody>
 </table>
 </div>
+
+
+## Linear Regression Time
+
+
+```python
+# Get list of all attributes for each category
+
+# Domains
+DomList = []
+for i in fullProtDF["Domain_ID"]:
+    if i:
+        for j in i:
+            if not j in DomList:
+                DomList.append(j)
+print(len(DomList))
+
+# MIM Ids
+MIMList = []
+for i in fullProtDF["MIM"]:
+    if i:
+        for j in i:
+            if not j in MIMList:
+                MIMList.append(j)
+print(len(MIMList))
+
+# Gene Ontology Ids
+GOList = []
+for i in fullProtDF["GO_ID"]:
+    if i:
+        for j in i:
+            if not j in GOList:
+                GOList.append(j)
+print(len(GOList))
+```
+
+
+```python
+# add list lengths to dataframe
+fullProtDF["numMIM"] = fullProtDF["MIM"].apply(lambda x: len(x) if x else None)
+fullProtDF["numDOM"] = fullProtDF["Domain_ID"].apply(lambda x: len(x) if x else None)
+fullProtDF["numGO"] = fullProtDF["GO_ID"].apply(lambda x: len(x) if x else None)
+display(fullProtDF.head())
+```
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>innateDB_ID</th>
+      <th>alias</th>
+      <th>UniprotID</th>
+      <th>Entry</th>
+      <th>Entry name</th>
+      <th>Organism</th>
+      <th>Mass</th>
+      <th>Length</th>
+      <th>Tissue specificity</th>
+      <th>Involvement in disease</th>
+      <th>Subcellular location [CC]</th>
+      <th>Gene ontology (GO)</th>
+      <th>Domain [CC]</th>
+      <th>Protein families</th>
+      <th>Domain [FT]</th>
+      <th>Degree_Centrality</th>
+      <th>flMass</th>
+      <th>MIM</th>
+      <th>Domain_ID</th>
+      <th>GO_ID</th>
+      <th>Closeness_Centrality</th>
+      <th>Eigenvector_Centrality</th>
+      <th>numMIM</th>
+      <th>numDOM</th>
+      <th>numGO</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>innatedb:IDBG-1</td>
+      <td>refseq:NP_003131|uniprotkb:Q05066|uniprotkb:SR...</td>
+      <td>Q05066</td>
+      <td>Q05066</td>
+      <td>SRY_HUMAN</td>
+      <td>Homo sapiens (Human)</td>
+      <td>23,884</td>
+      <td>204.0</td>
+      <td>NaN</td>
+      <td>DISEASE: 46,XY sex reversal 1 (SRXY1) [MIM:400...</td>
+      <td>SUBCELLULAR LOCATION: Nucleus speckle {ECO:000...</td>
+      <td>chromatin [GO:0000785]; cytoplasm [GO:0005737]...</td>
+      <td>DOMAIN: DNA binding and bending properties of ...</td>
+      <td>SRY family</td>
+      <td>NaN</td>
+      <td>0.000953</td>
+      <td>23884.0</td>
+      <td>[400044, 400045]</td>
+      <td>None</td>
+      <td>[0000785, 0005737, 0016607, 0005654, 0005634, ...</td>
+      <td>0.321910</td>
+      <td>0.001644</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>20.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>innatedb:IDBG-100000</td>
+      <td>uniprotkb:LPAR3_HUMAN|refseq:NP_036284|uniprot...</td>
+      <td>Q9UBY5</td>
+      <td>Q9UBY5</td>
+      <td>LPAR3_HUMAN</td>
+      <td>Homo sapiens (Human)</td>
+      <td>40,128</td>
+      <td>353.0</td>
+      <td>TISSUE SPECIFICITY: Most abundantly expressed ...</td>
+      <td>NaN</td>
+      <td>SUBCELLULAR LOCATION: Cell membrane; Multi-pas...</td>
+      <td>axon [GO:0030424]; cytoplasm [GO:0005737]; int...</td>
+      <td>NaN</td>
+      <td>G-protein coupled receptor 1 family</td>
+      <td>NaN</td>
+      <td>0.000079</td>
+      <td>40128.0</td>
+      <td>None</td>
+      <td>None</td>
+      <td>[0030424, 0005737, 0005887, 0005886, 0045202, ...</td>
+      <td>0.297747</td>
+      <td>0.000734</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>17.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>innatedb:IDBG-100012</td>
+      <td>uniprotkb:Q8IWG1|uniprotkb:WDR63_HUMAN|refseq:...</td>
+      <td>Q8IWG1</td>
+      <td>Q8IWG1</td>
+      <td>DNAI3_HUMAN</td>
+      <td>Homo sapiens (Human)</td>
+      <td>102,935</td>
+      <td>891.0</td>
+      <td>NaN</td>
+      <td>DISEASE: Note=A rare heterozygous in-frame DNA...</td>
+      <td>SUBCELLULAR LOCATION: Cytoplasm {ECO:0000269|P...</td>
+      <td>axonemal dynein complex [GO:0005858]; cytoplas...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.000040</td>
+      <td>102935.0</td>
+      <td>[]</td>
+      <td>None</td>
+      <td>[0005858, 0005737, 0036156, 0071933, 0045504, ...</td>
+      <td>0.264544</td>
+      <td>0.000114</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>12.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>innatedb:IDBG-10002</td>
+      <td>refseq:NP_056518|uniprotkb:Q9Y3A4|uniprotkb:RR...</td>
+      <td>Q9Y3A4</td>
+      <td>Q9Y3A4</td>
+      <td>RRP7A_HUMAN</td>
+      <td>Homo sapiens (Human)</td>
+      <td>32,334</td>
+      <td>280.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>CURI complex [GO:0032545]; cytoplasm [GO:00057...</td>
+      <td>NaN</td>
+      <td>RRP7 family</td>
+      <td>DOMAIN 61..90;  /note="RRM"</td>
+      <td>0.001033</td>
+      <td>32334.0</td>
+      <td>None</td>
+      <td>[RRM]</td>
+      <td>[0032545, 0005737, 0005654, 0034456, 0003723, ...</td>
+      <td>0.349394</td>
+      <td>0.006516</td>
+      <td>NaN</td>
+      <td>1.0</td>
+      <td>8.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>innatedb:IDBG-100021</td>
+      <td>uniprotkb:MCLN3_HUMAN|uniprotkb:Q8TDD5|refseq:...</td>
+      <td>Q8TDD5</td>
+      <td>Q8TDD5</td>
+      <td>MCLN3_HUMAN</td>
+      <td>Homo sapiens (Human)</td>
+      <td>64,248</td>
+      <td>553.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>SUBCELLULAR LOCATION: Cell membrane {ECO:00002...</td>
+      <td>autophagosome membrane [GO:0000421]; early end...</td>
+      <td>DOMAIN: The most N-terminal extracellular/lume...</td>
+      <td>Transient receptor (TC 1.A.4) family, Polycyst...</td>
+      <td>NaN</td>
+      <td>0.000079</td>
+      <td>64248.0</td>
+      <td>None</td>
+      <td>None</td>
+      <td>[0000421, 0031901, 0016021, 0031902, 0005765, ...</td>
+      <td>0.346118</td>
+      <td>0.002906</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>13.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+```python
+# applying a linear regression
+a = ~pd.isna(fullProtDF["flMass"])
+b = ~pd.isna(fullProtDF["Degree_Centrality"])
+
+x = np.array(fullProtDF[a & b]["flMass"]).reshape(-1,1)
+y = np.array(fullProtDF[a & b]["Degree_Centrality"]).reshape(-1,1)
+s = sm.OLS(y, x).fit()
+```
+
+
+```python
+print(s.summary())
+```
+
+                                     OLS Regression Results                                
+    =======================================================================================
+    Dep. Variable:                      y   R-squared (uncentered):                   0.021
+    Model:                            OLS   Adj. R-squared (uncentered):              0.021
+    Method:                 Least Squares   F-statistic:                              513.5
+    Date:                Mon, 16 May 2022   Prob (F-statistic):                   1.73e-112
+    Time:                        16:54:59   Log-Likelihood:                      1.0111e+05
+    No. Observations:               23594   AIC:                                 -2.022e+05
+    Df Residuals:                   23593   BIC:                                 -2.022e+05
+    Df Model:                           1                                                  
+    Covariance Type:            nonrobust                                                  
+    ==============================================================================
+                     coef    std err          t      P>|t|      [0.025      0.975]
+    ------------------------------------------------------------------------------
+    x1          5.063e-09   2.23e-10     22.661      0.000    4.62e-09     5.5e-09
+    ==============================================================================
+    Omnibus:                    86263.755   Durbin-Watson:                   1.977
+    Prob(Omnibus):                  0.000   Jarque-Bera (JB):      74785633831.254
+    Skew:                          77.137   Prob(JB):                         0.00
+    Kurtosis:                    8723.592   Cond. No.                         1.00
+    ==============================================================================
+    
+    Notes:
+    [1] R² is computed without centering (uncentered) since the model does not contain a constant.
+    [2] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+
+
+
+```python
+linearRegressList = ["flMass", "Length", 
+                     "Degree_Centrality", "Closeness_Centrality", "Eigenvector_Centrality", 
+                     "numMIM", "numDOM", "numGO"]
+pairs = []
+for i in range(len(linearRegressList)-1):
+    for j in range(i+1):
+        pairs.append((linearRegressList[i+1], linearRegressList[j]))
+        print((linearRegressList[i+1], linearRegressList[j]))
+
+```
+
+    ('Length', 'flMass')
+    ('Degree_Centrality', 'flMass')
+    ('Degree_Centrality', 'Length')
+    ('Closeness_Centrality', 'flMass')
+    ('Closeness_Centrality', 'Length')
+    ('Closeness_Centrality', 'Degree_Centrality')
+    ('Eigenvector_Centrality', 'flMass')
+    ('Eigenvector_Centrality', 'Length')
+    ('Eigenvector_Centrality', 'Degree_Centrality')
+    ('Eigenvector_Centrality', 'Closeness_Centrality')
+    ('numMIM', 'flMass')
+    ('numMIM', 'Length')
+    ('numMIM', 'Degree_Centrality')
+    ('numMIM', 'Closeness_Centrality')
+    ('numMIM', 'Eigenvector_Centrality')
+    ('numDOM', 'flMass')
+    ('numDOM', 'Length')
+    ('numDOM', 'Degree_Centrality')
+    ('numDOM', 'Closeness_Centrality')
+    ('numDOM', 'Eigenvector_Centrality')
+    ('numDOM', 'numMIM')
+    ('numGO', 'flMass')
+    ('numGO', 'Length')
+    ('numGO', 'Degree_Centrality')
+    ('numGO', 'Closeness_Centrality')
+    ('numGO', 'Eigenvector_Centrality')
+    ('numGO', 'numMIM')
+    ('numGO', 'numDOM')
+
+
+
+```python
+regressSols = []
+for i in pairs:
+    a = ~pd.isna(fullProtDF[i[0]])
+    b = ~pd.isna(fullProtDF[i[1]])
+
+    x = np.array(fullProtDF[a & b][i[0]]).reshape(-1,1)
+    y = np.array(fullProtDF[a & b][i[1]]).reshape(-1,1)
+    x = sm.add_constant(x)
+    s = sm.OLS(y, x).fit()
+    regressSols.append(s)
+```
+
+
+```python
+# print out the pairs, along with their coefficients and r squared values
+for i in range(len(regressSols)):
+    print(pairs[i])
+    print(f"Coefficient: {regressSols[i].params[0]:.2e}, rsquared: {regressSols[i].rsquared:.2f}\n")
+
+```
+
+    ('Length', 'flMass')
+    Coefficient: 2.38e+02, rsquared: 1.00
+    
+    ('Degree_Centrality', 'flMass')
+    Coefficient: 6.69e+04, rsquared: 0.00
+    
+    ('Degree_Centrality', 'Length')
+    Coefficient: 6.01e+02, rsquared: 0.00
+    
+    ('Closeness_Centrality', 'flMass')
+    Coefficient: 3.81e+04, rsquared: 0.00
+    
+    ('Closeness_Centrality', 'Length')
+    Coefficient: 3.45e+02, rsquared: 0.00
+    
+    ('Closeness_Centrality', 'Degree_Centrality')
+    Coefficient: -3.06e-03, rsquared: 0.04
+    
+    ('Eigenvector_Centrality', 'flMass')
+    Coefficient: 6.59e+04, rsquared: 0.00
+    
+    ('Eigenvector_Centrality', 'Length')
+    Coefficient: 5.92e+02, rsquared: 0.00
+    
+    ('Eigenvector_Centrality', 'Degree_Centrality')
+    Coefficient: -5.50e-04, rsquared: 0.61
+    
+    ('Eigenvector_Centrality', 'Closeness_Centrality')
+    Coefficient: 2.93e-01, rsquared: 0.23
+    
+    ('numMIM', 'flMass')
+    Coefficient: 6.93e+04, rsquared: 0.01
+    
+    ('numMIM', 'Length')
+    Coefficient: 6.19e+02, rsquared: 0.01
+    
+    ('numMIM', 'Degree_Centrality')
+    Coefficient: 7.47e-04, rsquared: 0.01
+    
+    ('numMIM', 'Closeness_Centrality')
+    Coefficient: 3.32e-01, rsquared: 0.00
+    
+    ('numMIM', 'Eigenvector_Centrality')
+    Coefficient: 4.35e-03, rsquared: 0.01
+    
+    ('numDOM', 'flMass')
+    Coefficient: 5.29e+04, rsquared: 0.49
+    
+    ('numDOM', 'Length')
+    Coefficient: 4.73e+02, rsquared: 0.50
+    
+    ('numDOM', 'Degree_Centrality')
+    Coefficient: 7.78e-04, rsquared: 0.00
+    
+    ('numDOM', 'Closeness_Centrality')
+    Coefficient: 3.11e-01, rsquared: 0.00
+    
+    ('numDOM', 'Eigenvector_Centrality')
+    Coefficient: 3.09e-03, rsquared: 0.00
+    
+    ('numDOM', 'numMIM')
+    Coefficient: 1.53e+00, rsquared: 0.01
+    
+    ('numGO', 'flMass')
+    Coefficient: 6.08e+04, rsquared: 0.01
+    
+    ('numGO', 'Length')
+    Coefficient: 5.45e+02, rsquared: 0.01
+    
+    ('numGO', 'Degree_Centrality')
+    Coefficient: 1.43e-04, rsquared: 0.03
+    
+    ('numGO', 'Closeness_Centrality')
+    Coefficient: 3.03e-01, rsquared: 0.01
+    
+    ('numGO', 'Eigenvector_Centrality')
+    Coefficient: 1.94e-03, rsquared: 0.02
+    
+    ('numGO', 'numMIM')
+    Coefficient: 1.15e+00, rsquared: 0.08
+    
+    ('numGO', 'numDOM')
+    Coefficient: 2.01e+00, rsquared: 0.00
+    
+
+
+
+```python
+# making a histogram of the r-squared values
+rSq = np.array([i.rsquared for i in regressSols])
+plt.figure()
+plt.hist(rSq, bins = 30)
+plt.show()
+```
+
+
+    
+![png](output_36_0.png)
+    
+
+
+
+```python
+rsqCutoff = .03
+nrsq = (rSq > rsqCutoff).sum()
+print(f"Number of pairs with an r squared greater than .4: {nrsq}")
+# print out the pairs, along with their coefficients and r squared values
+for i in range(len(regressSols)):
+    if regressSols[i].rsquared > rsqCutoff:
+        print(pairs[i])
+        
+```
+
+    Number of pairs with an r squared greater than .4: 7
+    ('Length', 'flMass')
+    ('Closeness_Centrality', 'Degree_Centrality')
+    ('Eigenvector_Centrality', 'Degree_Centrality')
+    ('Eigenvector_Centrality', 'Closeness_Centrality')
+    ('numDOM', 'flMass')
+    ('numDOM', 'Length')
+    ('numGO', 'numMIM')
+
+
+
+```python
+plt.figure(figsize = [10,60])
+j = 1
+for i in range(len(regressSols)):
+    if regressSols[i].rsquared > rsqCutoff:
+        plt.subplot(nrsq,1,j)
+        j += 1
+        a = ~pd.isna(fullProtDF[pairs[i][0]])
+        b = ~pd.isna(fullProtDF[pairs[i][1]])
+
+        x = np.array(fullProtDF[a & b][pairs[i][0]]).reshape(-1,1)
+        y = np.array(fullProtDF[a & b][pairs[i][1]]).reshape(-1,1)
+        plt.scatter(x, y, label = "Data")
+        plt.plot(x, regressSols[i].params[1]*x + regressSols[i].params[0], color = "orange", label = "Fit")
+        plt.xlabel(pairs[i][0], fontsize = 15)
+        plt.ylabel(pairs[i][1], fontsize = 15)
+        plt.grid(True, linestyle = "--")
+        plt.legend(fontsize = 13)
+plt.tight_layout()
+plt.show()
+```
+
+
+    
+![png](output_38_0.png)
+    
 
 
 
